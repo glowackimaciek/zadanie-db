@@ -1,57 +1,92 @@
-import sqlite3
-
-conn = sqlite3.connect("zadania.db")
-cursor = conn.cursor()
-
-cursor.execute("""
-    CREATE TABLE IF NOT EXISTS zadania (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nazwa TEXT NOT NULL,
-        status TEXT NOT NULL
-    )
-""")
-conn.commit()
+from db import (
+    dodaj_zadanie,
+    pokaz_zadania,
+    zmien_status_zadania,
+    usun_zadanie,
+    znajdz_zadanie,
+)
 
 
-def dodaj_zadanie(conn, cursor, nazwa, status):
-    cursor.execute(
-        """
-        INSERT INTO zadania (nazwa, status)
-        VALUES (?, ?)
-    """,
-        (nazwa, status),
-    )
-    conn.commit()
-    print(f"Zadanie '{nazwa}' dodane!")
+def menu():
+    while True:
+        print(f"\n--- Lista ToDo---")
+        print("1. Wyświetl zadania")
+        print("2. Dodaj zadanie")
+        print("3. Usuń zadanie")
+        print("4. Zmień status zadania")
+        print("5. Zamknij")
+
+        try:
+            choice = int(input("Wybierz: "))
+        except ValueError:
+            print("Tylko cyfry")
+            continue
+
+        if choice == 1:
+            pokaz_zadania()
+        elif choice == 2:
+            print("--- Dodawanie zadania ---")
+            nazwa = input("Zadanie: ")
+            print("--- Wybierz status ---")
+            print("1. Do wykonania")
+            print("2. Wykonane")
+            print("3. Cofnij")
+
+            try:
+                choice = int(input("Wybierz: "))
+            except ValueError:
+                print("Tylko cyfry")
+                continue
+
+            if choice == 1:
+                dodaj_zadanie(nazwa, "Do wykonania")
+            elif choice == 2:
+                dodaj_zadanie(nazwa, "Wykonane")
+            elif choice == 3:
+                continue
+            else:
+                print("Bładne polecenie")
+
+        elif choice == 3:
+            print("--- Usuwanie zadania ---")
+            try:
+                id = int(input("Podaj id zadania: "))
+            except ValueError:
+                print("Tylko cyfry")
+                continue
+            if znajdz_zadanie(id):
+                usun_zadanie(id)
+            else:
+                print("Brak zadania o podanym id")
+        elif choice == 4:
+            print("--- Zmiana statusu zadania ---")
+            try:
+                id = int(input("Podaj id zadania: "))
+            except ValueError:
+                print("Tylko cyfry")
+                continue
+            if znajdz_zadanie(id):
+                print("1. Do wykonania")
+                print("2. Wykonane")
+                try:
+                    choice = int(input("Wybierz: "))
+                except ValueError:
+                    continue
+                if choice == 1:
+                    zmien_status_zadania("Do wykonania", id)
+                elif choice == 2:
+                    zmien_status_zadania("Wykonane", id)
+                else:
+                    print("Tylko cyfry")
+                    return
+            else:
+                print("Brak zadania o podanym id")
+        elif choice == 5:
+            print("Zamykanie")
+            break
+        else:
+            print("Tylko cyfrey 1-5")
+            continue
 
 
-def pokaz_zadania(cursor):
-    cursor.execute("SELECT * FROM zadania")
-    zadania = cursor.fetchall()
-    if not zadania:
-        print("Brak zadań!")
-    for zadanie in zadania:
-        print(f"ID: {zadanie[0]} | Nazwa: {zadanie[1]} | Status: {zadanie[2]}")
-
-
-def zmien_status_zadania(conn, cursor, nowy_status, id):
-    cursor.execute("UPDATE zadania SET status = ? WHERE id = ?", (nowy_status, id))
-    conn.commit()
-    print(f"Zadanie nr {id}, zmieniono status na: {nowy_status}")
-
-
-def usun_zadanie(conn, cursor, id):
-    cursor.execute("DELETE FROM zadania WHERE id = ?", (id,))
-    conn.commit()
-    print(f"Zadanie nr {id} usunięte!")
-
-
-dodaj_zadanie(conn, cursor, "Nauka SQLite", "Do zrobienia")
-pokaz_zadania(cursor)
-
-dodaj_zadanie(conn, cursor, "Drugie zadanie", "Do zrobienia")
-pokaz_zadania(cursor)
-zmien_status_zadania(conn, cursor, "Wykonane", 1)
-pokaz_zadania(cursor)
-usun_zadanie(conn, cursor, 2)
-pokaz_zadania(cursor)
+menu()
